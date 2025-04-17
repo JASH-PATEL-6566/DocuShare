@@ -1,0 +1,189 @@
+Here are the complete **DynamoDB document models** for all the key entities in your **DocuShare** platform, including **User**, **File**, **Link**, and **AccessLog** models.
+
+---
+
+### **1. User Table**
+
+The `User` table will store all the information about users, including their profile details and subscription status.
+
+#### Table Name: `Users`
+
+| Attribute        | Type       | Description                                                   |
+|------------------|------------|---------------------------------------------------------------|
+| `userId`         | String (PK) | Unique identifier for the user (e.g., UUID)                   |
+| `email`          | String     | User's email address                                           |
+| `passwordHash`   | String     | User's password hash (e.g., bcrypt)                            |
+| `subscriptionId` | String     | Subscription plan ID (e.g., `free`, `premium`)                |
+| `subscriptionExpiry` | String | Expiry date of the subscription                                |
+| `createdAt`      | String     | Timestamp of user registration                                 |
+| `updatedAt`      | String     | Timestamp of the last profile update                           |
+
+**Example**:
+```json
+{
+  "userId": "user-1234",
+  "email": "user@example.com",
+  "passwordHash": "bcrypt_hash",
+  "subscriptionId": "premium",
+  "subscriptionExpiry": "2025-12-31T23:59:59Z",
+  "createdAt": "2025-03-01T12:00:00Z",
+  "updatedAt": "2025-04-06T14:00:00Z"
+}
+```
+
+---
+
+### **2. File Table**
+
+The `Files` table stores metadata related to the uploaded files, including the user who uploaded them and the file's storage information.
+
+#### Table Name: `Files`
+
+| Attribute      | Type       | Description                                                   |
+|----------------|------------|---------------------------------------------------------------|
+| `fileId`       | String (PK) | Unique file identifier (e.g., UUID)                           |
+| `userId`       | String     | User ID of the uploader                                        |
+| `fileName`     | String     | Original name of the file                                      |
+| `fileSize`     | Number     | File size in bytes                                             |
+| `fileType`     | String     | File type (e.g., PDF, MP4, JPG)                                |
+| `s3Url`        | String     | S3 URL or the storage location of the file                     |
+| `uploadTime`   | String     | Timestamp of when the file was uploaded                        |
+| `updatedAt`    | String     | Timestamp of the last file update                              |
+
+**Example**:
+```json
+{
+  "fileId": "abc123",
+  "userId": "user-1234",
+  "fileName": "document.pdf",
+  "fileSize": 204800,
+  "fileType": "PDF",
+  "s3Url": "https://s3.amazonaws.com/bucket/document.pdf",
+  "uploadTime": "2025-03-01T12:30:00Z",
+  "updatedAt": "2025-03-01T12:45:00Z"
+}
+```
+
+---
+
+### **3. Links Table (Updated)**
+
+The `Links` table stores metadata and constraints related to the shareable links generated for each file, such as download limits, expiry times, and view limits.
+
+#### Table Name: `Links`
+
+| Attribute         | Type       | Description                                                   |
+|-------------------|------------|---------------------------------------------------------------|
+| `linkId`          | String (PK) | Unique identifier for the link (e.g., UUID)                   |
+| `fileId`          | String (SK) | File ID that the link is associated with                      |
+| `userId`          | String     | User ID who created the link                                  |
+| `expiryTimestamp` | String     | Expiry timestamp for the link (ISO 8601)                      |
+| `passwordHash`    | String     | Hash of the password (bcrypt) if password-protected           |
+| `downloadLimit`   | Number     | Max number of downloads allowed                               |
+| `downloadsSoFar`  | Number     | Number of downloads made so far                               |
+| `viewLimit`       | Number     | Max number of views allowed                                   |
+| `viewsSoFar`      | Number     | Number of views made so far                                   |
+| `allowDownload`   | Boolean    | Whether downloads are allowed (true/false)                     |
+| `accessLogs`      | List       | List of access log objects (see `AccessLogs` table)            |
+| `createdAt`       | String     | Timestamp of link creation                                    |
+| `updatedAt`       | String     | Timestamp of the last update                                  |
+
+**Example**:
+```json
+{
+  "linkId": "uuid-1234",
+  "fileId": "abc123",
+  "userId": "user-1234",
+  "expiryTimestamp": "2025-04-07T00:00:00Z",
+  "passwordHash": "bcrypt_hash",
+  "downloadLimit": 3,
+  "downloadsSoFar": 1,
+  "viewLimit": 5,
+  "viewsSoFar": 2,
+  "allowDownload": false,
+  "accessLogs": [
+    {
+      "logId": "log-001",
+      "linkId": "uuid-1234",
+      "userId": "user-1234",
+      "ipAddress": "192.168.1.1",
+      "userAgent": "Mozilla/5.0",
+      "accessTime": "2025-03-01T12:30:00Z",
+      "action": "view"
+    }
+  ],
+  "createdAt": "2025-03-01T12:00:00Z",
+  "updatedAt": "2025-03-01T12:45:00Z"
+}
+```
+
+---
+
+### **4. AccessLogs Table**
+
+The `AccessLogs` table stores detailed information about each access attempt to a file via a generated link, including information like the user's IP address, user agent, and access time.
+
+#### Table Name: `AccessLogs`
+
+| Attribute         | Type       | Description                                                   |
+|-------------------|------------|---------------------------------------------------------------|
+| `logId`           | String (PK) | Unique log identifier (e.g., UUID)                            |
+| `linkId`          | String (SK) | Link ID that was accessed                                      |
+| `userId`          | String     | User ID of the person who accessed the file                   |
+| `ipAddress`       | String     | IP address from which the link was accessed                   |
+| `userAgent`       | String     | User agent string (browser, OS)                               |
+| `accessTime`      | String     | Timestamp of the access                                        |
+| `action`          | String     | Type of access (e.g., "view", "download")                      |
+
+**Example**:
+```json
+{
+  "logId": "log-001",
+  "linkId": "uuid-1234",
+  "userId": "user-1234",
+  "ipAddress": "192.168.1.1",
+  "userAgent": "Mozilla/5.0",
+  "accessTime": "2025-03-01T12:30:00Z",
+  "action": "view"
+}
+```
+
+---
+
+### **5. Subscription Plans Table**
+
+The `SubscriptionPlans` table stores the details of different subscription plans (Free, Premium, etc.), including their features and limitations.
+
+#### Table Name: `SubscriptionPlans`
+
+| Attribute         | Type       | Description                                                   |
+|-------------------|------------|---------------------------------------------------------------|
+| `planId`          | String (PK) | Unique identifier for the subscription plan (e.g., `free`, `premium`) |
+| `name`            | String     | Name of the plan (e.g., Free, Premium)                        |
+| `features`        | Map        | Features and limitations associated with the plan             |
+| `price`           | Number     | Price of the plan (if paid)                                   |
+| `createdAt`       | String     | Timestamp of plan creation                                    |
+
+**Example**:
+```json
+{
+  "planId": "premium",
+  "name": "Premium",
+  "features": {
+    "storageLimit": "50GB",
+    "downloadLimit": "unlimited",
+    "linkExpiry": "30 days",
+    "passwordProtection": true
+  },
+  "price": 9.99,
+  "createdAt": "2025-03-01T12:00:00Z"
+}
+```
+
+---
+
+### Summary:
+
+These tables ensure a well-structured, scalable approach for your **DocuShare** platform. You can easily track users, file metadata, link generation with constraints, and detailed access logs to monitor usage and enforce limits.
+
+Would you like help setting up these DynamoDB tables in AWS or integrating them with your backend?
