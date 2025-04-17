@@ -162,8 +162,6 @@ jobs:
     steps:
       - name: Checkout frontend code
         uses: actions/checkout@v2
-        with:
-          path: frontend
 
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
@@ -191,8 +189,6 @@ jobs:
     steps:
       - name: Checkout backend code
         uses: actions/checkout@v2
-        with:
-          path: backend
 
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
