@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main # Trigger on push to the 'main' branch
+      - master # Trigger on push to the 'main' branch
 
 jobs:
   build-frontend:
@@ -21,7 +21,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "your-region"
+          aws-region: ${{ secrets.AWS_REGION }}
 
       # Set up Docker
       - name: Set up Docker Buildx
@@ -30,17 +30,17 @@ jobs:
       # Log in to Amazon ECR for frontend
       - name: Log in to Amazon ECR frontend
         run: |
-          aws ecr get-login-password --region your-region | docker login --username AWS --password-stdin ${{ secrets.ECR_FRONTEND_REPO }}
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_FRONTEND_REPO }}
 
       # Build Docker image for frontend
       - name: Build Docker image for frontend
         run: |
-          docker build -t ${{ secrets.ECR_FRONTEND_REPO }}/frontend-image:latest frontend/
+          docker build -t ${{ secrets.ECR_FRONTEND_REPO }}:latest frontend/
 
       # Push Docker image to ECR for frontend
       - name: Push Docker image to ECR frontend
         run: |
-          docker push ${{ secrets.ECR_FRONTEND_REPO }}/frontend-image:latest
+          docker push ${{ secrets.ECR_FRONTEND_REPO }}:latest
 
   build-backend:
     runs-on: ubuntu-latest
@@ -57,22 +57,22 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "your-region"
+          aws-region: "${{ secrets.AWS_REGION }}"
 
       # Log in to Amazon ECR for backend
       - name: Log in to Amazon ECR backend
         run: |
-          aws ecr get-login-password --region your-region | docker login --username AWS --password-stdin ${{ secrets.ECR_BACKEND_REPO }}
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_BACKEND_REPO }}
 
       # Build Docker image for backend
       - name: Build Docker image for backend
         run: |
-          docker build -t ${{ secrets.ECR_BACKEND_REPO }}/backend-image:latest backend/
+          docker build -t ${{ secrets.ECR_BACKEND_REPO }}:latest backend/
 
       # Push Docker image to ECR for backend
       - name: Push Docker image to ECR backend
         run: |
-          docker push ${{ secrets.ECR_BACKEND_REPO }}/backend-image:latest
+          docker push ${{ secrets.ECR_BACKEND_REPO }}:latest
 
   deploy-frontend:
     runs-on: ubuntu-latest
@@ -104,13 +104,13 @@ jobs:
             fi
 
             # Authenticate Docker to ECR
-            aws ecr get-login-password --region your-region | docker login --username AWS --password-stdin ${{ secrets.ECR_FRONTEND_REPO }}
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_FRONTEND_REPO }}
 
             # Pull the latest frontend image
-            docker pull ${{ secrets.ECR_FRONTEND_REPO }}/frontend-image:latest
+            docker pull ${{ secrets.ECR_FRONTEND_REPO }}:latest
 
             # Run the frontend container on port 80
-            docker run -d -p 80:3000 --name frontend ${secrets.ECR_FRONTEND_REPO}/frontend-image:latest
+            docker run -d -p 80:3000 --name frontend ${secrets.ECR_FRONTEND_REPO}:latest
 
   deploy-backend:
     runs-on: ubuntu-latest
@@ -142,10 +142,10 @@ jobs:
             fi
 
             # Authenticate Docker to ECR
-            aws ecr get-login-password --region your-region | docker login --username AWS --password-stdin ${{ secrets.ECR_BACKEND_REPO }}
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_BACKEND_REPO }}
 
             # Pull the latest backend image
-            docker pull ${{ secrets.ECR_BACKEND_REPO }}/backend-image:latest
+            docker pull ${{ secrets.ECR_BACKEND_REPO }}:latest
 
             # Run the backend container on port 3001
-            docker run -d -p 3001:3001 --name backend ${secrets.ECR_BACKEND_REPO}/backend-image:latest
+            docker run -d -p 3001:3001 --name backend ${secrets.ECR_BACKEND_REPO}:latest
