@@ -184,7 +184,7 @@ jobs:
           docker buildx create --use
           docker buildx build --platform linux/amd64,linux/arm64 \
             -t ${{ secrets.ECR_FRONTEND_REPO }}:latest \
-            --push .
+            --push ./frontend
 
   build-backend:
     runs-on: ubuntu-latest
@@ -210,11 +210,10 @@ jobs:
 
       - name: Build and push backend Docker image
         run: |
-          cd backend
           docker buildx create --use
           docker buildx build --platform linux/amd64,linux/arm64 \
             -t ${{ secrets.ECR_BACKEND_REPO }}:latest \
-            --push .
+            --push ./backend
 
   deploy-frontend:
     runs-on: ubuntu-latest
