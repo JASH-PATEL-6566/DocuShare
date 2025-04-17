@@ -1,154 +1,3 @@
-# name: CI/CD Pipeline
-
-# on:
-#   push:
-#     branches:
-#       - master # Trigger on push to the 'main' branch
-
-# jobs:
-#   build-frontend:
-#     runs-on: ubuntu-latest
-#     steps:
-#       # Checkout the frontend code
-#       - name: Checkout frontend code
-#         uses: actions/checkout@v2
-#         with:
-#           path: frontend
-
-#       # Set up AWS CLI
-#       - name: Set up AWS CLI
-#         uses: aws-actions/configure-aws-credentials@v1
-#         with:
-#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           aws-region: ${{ secrets.AWS_REGION }}
-
-#       # Set up Docker
-#       - name: Set up Docker Buildx
-#         uses: docker/setup-buildx-action@v1
-
-#       # Log in to Amazon ECR for frontend
-#       - name: Log in to Amazon ECR frontend
-#         run: |
-#           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_FRONTEND_REPO }}
-
-#       # Build Docker image for frontend
-#       - name: Build Docker image for frontend
-#         run: |
-#           docker build -t ${{ secrets.ECR_FRONTEND_REPO }}:latest frontend/
-
-#       # Push Docker image to ECR for frontend
-#       - name: Push Docker image to ECR frontend
-#         run: |
-#           docker push ${{ secrets.ECR_FRONTEND_REPO }}:latest
-
-#   build-backend:
-#     runs-on: ubuntu-latest
-#     steps:
-#       # Checkout the backend code
-#       - name: Checkout backend code
-#         uses: actions/checkout@v2
-#         with:
-#           path: backend
-
-#       # Set up AWS CLI
-#       - name: Set up AWS CLI
-#         uses: aws-actions/configure-aws-credentials@v1
-#         with:
-#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           aws-region: "${{ secrets.AWS_REGION }}"
-
-#       # Log in to Amazon ECR for backend
-#       - name: Log in to Amazon ECR backend
-#         run: |
-#           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_BACKEND_REPO }}
-
-#       # Build Docker image for backend
-#       - name: Build Docker image for backend
-#         run: |
-#           docker build -t ${{ secrets.ECR_BACKEND_REPO }}:latest backend/
-
-#       # Push Docker image to ECR for backend
-#       - name: Push Docker image to ECR backend
-#         run: |
-#           docker push ${{ secrets.ECR_BACKEND_REPO }}:latest
-
-#   deploy-frontend:
-#     runs-on: ubuntu-latest
-#     needs: build-frontend
-#     steps:
-#       # SSH into Frontend EC2 and deploy
-#       - name: Deploy frontend to EC2
-#         uses: appleboy/ssh-action@v0.1.5
-#         with:
-#           host: ${{ secrets.EC2_FRONTEND_PUBLIC_IP }}
-#           username: ec2-user # Change to ubuntu if using Ubuntu
-#           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-#           script: |
-#             # Install Docker if not present
-#             if ! command -v docker &> /dev/null; then
-#               echo "Installing Docker..."
-#               sudo yum update -y
-#               sudo yum install -y docker
-#               sudo service docker start
-#               sudo usermod -aG docker $USER
-#             fi
-
-#             # Install AWS CLI if not present
-#             if ! command -v aws &> /dev/null; then
-#               echo "Installing AWS CLI..."
-#               curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-#               unzip awscliv2.zip
-#               sudo ./aws/install
-#             fi
-
-#             # Authenticate Docker to ECR
-#             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_FRONTEND_REPO }}
-
-#             # Pull the latest frontend image
-#             docker pull ${{ secrets.ECR_FRONTEND_REPO }}:latest
-
-#             # Run the frontend container on port 80
-#             docker run -d -p 80:3000 --name frontend ${secrets.ECR_FRONTEND_REPO}:latest
-
-#   deploy-backend:
-#     runs-on: ubuntu-latest
-#     needs: build-backend
-#     steps:
-#       # SSH into Backend EC2 and deploy
-#       - name: Deploy backend to EC2
-#         uses: appleboy/ssh-action@v0.1.5
-#         with:
-#           host: ${{ secrets.EC2_BACKEND_PRIVATE_IP }}
-#           username: ec2-user # Change to ubuntu if using Ubuntu
-#           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-#           script: |
-#             # Install Docker if not present
-#             if ! command -v docker &> /dev/null; then
-#               echo "Installing Docker..."
-#               sudo yum update -y
-#               sudo yum install -y docker
-#               sudo service docker start
-#               sudo usermod -aG docker $USER
-#             fi
-
-#             # Install AWS CLI if not present
-#             if ! command -v aws &> /dev/null; then
-#               echo "Installing AWS CLI..."
-#               curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-#               unzip awscliv2.zip
-#               sudo ./aws/install
-#             fi
-
-#             # Authenticate Docker to ECR
-#             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_BACKEND_REPO }}
-
-#             # Pull the latest backend image
-#             docker pull ${{ secrets.ECR_BACKEND_REPO }}:latest
-
-#             # Run the backend container on port 3001
-#             docker run -d -p 3001:3001 --name backend ${secrets.ECR_BACKEND_REPO}:latest
 name: CI/CD Pipeline
 
 on:
@@ -222,19 +71,6 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
-            if ! command -v docker &> /dev/null; then
-              sudo yum update -y
-              sudo yum install -y docker
-              sudo service docker start
-              sudo usermod -aG docker $USER
-            fi
-
-            if ! command -v aws &> /dev/null; then
-              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-              unzip awscliv2.zip
-              sudo ./aws/install
-            fi
-
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_FRONTEND_REPO }}
             docker pull ${{ secrets.ECR_FRONTEND_REPO }}:latest
             docker stop frontend || true && docker rm frontend || true
@@ -244,27 +80,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-backend
     steps:
-      - name: Deploy backend to EC2
+      - name: Deploy backend to private EC2 via Bastion Host
         uses: appleboy/ssh-action@v0.1.5
         with:
-          host: ${{ secrets.EC2_BACKEND_PRIVATE_IP }}
+          host: ${{ secrets.EC2_FRONTEND_PUBLIC_IP }} # Bastion Host IP
           username: ec2-user
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }} # SSH private key for Bastion Host
           script: |
-            if ! command -v docker &> /dev/null; then
-              sudo yum update -y
-              sudo yum install -y docker
-              sudo service docker start
-              sudo usermod -aG docker $USER
-            fi
-
-            if ! command -v aws &> /dev/null; then
-              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-              unzip awscliv2.zip
-              sudo ./aws/install
-            fi
-
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_BACKEND_REPO }}
-            docker pull ${{ secrets.ECR_BACKEND_REPO }}:latest
-            docker stop backend || true && docker rm backend || true
-            docker run -d -p 8080:8080 --name backend ${{ secrets.ECR_BACKEND_REPO }}:latest
+            # SSH into Bastion Host and access private backend EC2
+            ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY }} ec2-user@${{ secrets.EC2_FRONTEND_PUBLIC_IP }} "
+              ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY }} ec2-user@${{ secrets.EC2_BACKEND_PRIVATE_IP }} '
+                aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_BACKEND_REPO }}
+                docker pull ${{ secrets.ECR_BACKEND_REPO }}:latest
+                docker stop backend || true && docker rm backend || true
+                docker run -d -p 8080:8080 --name backend ${{ secrets.ECR_BACKEND_REPO }}:latest
+              '
+            "

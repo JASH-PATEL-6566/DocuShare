@@ -1,7 +1,7 @@
 // API client for DocuShare backend
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+  process.env.NEXT_PUBLIC_API_URL || "http://10.0.2.84:3001/api";
 
 // Helper function to get the auth token
 const getToken = () => {
