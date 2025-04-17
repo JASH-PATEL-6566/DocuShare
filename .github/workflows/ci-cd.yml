@@ -180,8 +180,8 @@ jobs:
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_FRONTEND_REPO }}
 
       - name: Build and push frontend Docker image
+        working-directory: ./frontend
         run: |
-          cd frontend
           docker buildx create --use
           docker buildx build --platform linux/amd64,linux/arm64 \
             -t ${{ secrets.ECR_FRONTEND_REPO }}:latest \
