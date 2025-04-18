@@ -123,7 +123,7 @@ jobs:
       - name: SSH and deploy both containers
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: 18.227.105.62
+          host: 18.191.67.241
           username: ec2-user
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |

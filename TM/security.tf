@@ -30,11 +30,11 @@ resource "aws_security_group" "web_server" {
 
   # Add this new rule for port 3000  
   ingress {
-    from_port   = 3000
-    to_port     = 3000
+    from_port   = 3001
+    to_port     = 3001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Application port"
+    description = "Allow backend traffic on port 3001"
   }
 
   # Outbound
