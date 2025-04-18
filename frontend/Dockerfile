@@ -1,21 +1,31 @@
-# Use a lightweight Node image
-FROM node:18-alpine
+# Stage 1: Build
+FROM node:22-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy only what's needed to run the app
-COPY package.json package-lock.json ./
-RUN npm ci --only=production
+COPY package*.json ./
+RUN npm install --legacy-peer-deps
 
-# Copy the compiled Next.js app and other necessary files
-COPY .next .next
-COPY public public
-COPY next.config.mjs .
-COPY tsconfig.json .
+COPY . .
 
-# Expose Next.js default port
+RUN npm run build
+
+# Stage 2: Run
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/package*.json ./
+RUN npm install --legacy-peer-deps --only=production
+
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+# COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/node_modules ./node_modules
+
+COPY --from=builder /app/.env .env
+
+# Expose frontend port
 EXPOSE 3000
 
-# Run the production server
 CMD ["npm", "start"]
