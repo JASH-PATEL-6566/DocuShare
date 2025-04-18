@@ -78,7 +78,7 @@ jobs:
         run: |
           aws ssm send-command \
             --document-name "AWS-RunShellScript" \
-            --instance-ids "i-06a847e5f08b98a7e" \
+            --instance-ids "i-0a53b19243192bb9a" \
             --comment "Deploy backend container" \
             --parameters 'commands=[
               "if ! command -v docker &> /dev/null; then",
