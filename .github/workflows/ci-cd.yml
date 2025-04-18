@@ -103,8 +103,8 @@ on:
 
 env:
   AWS_REGION: us-east-2
-  BASE_ECR_URL_BACKEND: 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend:latest
-  BASE_ECR_URL_FRONTEND: 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-frontend:latest
+  BASE_ECR_URL_BACKEND: 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend
+  BASE_ECR_URL_FRONTEND: 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-frontend
   APP_ID: 715841365404
 
 jobs:
@@ -140,32 +140,29 @@ jobs:
               echo "Docker is already installed."
             fi
 
-            FRONTEND_IMAGE=${{ env.BASE_ECR_URL_FRONTEND }}:latest
-            BACKEND_IMAGE=${{ env.BASE_ECR_URL_BACKEND }}:latest
+            FRONTEND_IMAGE=715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-frontend:latest
+            BACKEND_IMAGE=715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend:latest
 
             echo "Logging into ECR..."
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.BASE_ECR_URL_FRONTEND }}
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.BASE_ECR_URL_BACKEND }}
 
             echo "Pulling images..."
-            docker pull $FRONTEND_IMAGE
-            docker pull $BACKEND_IMAGE
+            sudo docker pull $FRONTEND_IMAGE
+            sudo docker pull $BACKEND_IMAGE
 
             echo "Stopping old containers..."
-            docker stop docushare-frontend || true
-            docker rm docushare-frontend || true
-            docker stop docushare-backend || true
-            docker rm docushare-backend || true
+            sudo docker stop docushare-frontend || true
+            sudo docker rm docushare-frontend || true
+            sudo docker stop docushare-backend || true
+            sudo docker rm docushare-backend || true
 
             echo "Starting Frontend container..."
-            docker run -d --name docushare-frontend \
+            sudo docker run -d --name docushare-frontend \
               -p 80:3000 \
               $FRONTEND_IMAGE
 
             echo "Starting Backend container..."
-            docker run -d --name docushare-backend \
+            sudo docker run -d --name docushare-backend \
               -p 3001:3001 \
               $BACKEND_IMAGE
-
-            echo "Starting Backend container..."
-            docker run -d --name
