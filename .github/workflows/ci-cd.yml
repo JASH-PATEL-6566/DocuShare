@@ -53,7 +53,6 @@ jobs:
 
             echo "Pulling frontend and backend Docker images..."
             sudo docker pull $FRONTEND_IMAGE
-            sudo docker pull $BACKEND_IMAGE
 
             echo "Stopping old containers..."
             sudo docker stop docushare-frontend || true && sudo docker rm docushare-frontend || true
@@ -63,8 +62,6 @@ jobs:
             echo "Starting Frontend container..."
             sudo docker run -d --name docushare-frontend -p 80:3000 "$FRONTEND_IMAGE"
 
-            echo "Starting Backend container..."
-            sudo docker run -d --name docushare-backend -p 3001:3001 "$BACKEND_IMAGE"
 
   deploy-to-private-ec2-backend:
     name: Deploy Backend to Private EC2
