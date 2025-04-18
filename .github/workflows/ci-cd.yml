@@ -140,8 +140,8 @@ jobs:
               echo "Docker is already installed."
             fi
 
-            FRONTEND_IMAGE=715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-frontend:latest
-            BACKEND_IMAGE=715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend:latest
+            FRONTEND_IMAGE=715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend
+            BACKEND_IMAGE=715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend
 
             echo "Logging into ECR..."
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.BASE_ECR_URL_FRONTEND }}
