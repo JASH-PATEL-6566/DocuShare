@@ -147,12 +147,12 @@ jobs:
             aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 715841365404.dkr.ecr.us-east-2.amazonaws.com
 
             echo "Pulling images..."
-            docker pull $FRONTEND_IMAGE
-            docker pull $BACKEND_IMAGE
+            sudo docker pull $FRONTEND_IMAGE
+            sudo docker pull $BACKEND_IMAGE
 
             echo "Stopping old containers..."
-            docker stop docushare-frontend || true && docker rm docushare-frontend || true
-            docker stop docushare-backend || true && docker rm docushare-backend || true
+            sudo docker stop docushare-frontend || true && docker rm docushare-frontend || true
+            sudo docker stop docushare-backend || true && docker rm docushare-backend || true
 
             echo "Starting Frontend container..."
             sudo docker run -d --name docushare-frontend \
