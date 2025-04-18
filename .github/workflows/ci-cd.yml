@@ -1,100 +1,3 @@
-# name: CI/CD Pipeline
-
-# on:
-#   push:
-#     branches:
-#       - master
-
-# jobs:
-#   build-frontend:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout frontend code
-#         uses: actions/checkout@v2
-
-#       - uses: actions/setup-node@v3
-#         with:
-#           node-version: "12.22.0"
-
-#       - name: Set up AWS CLI
-#         uses: aws-actions/configure-aws-credentials@v1
-#         with:
-#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           aws-region: ${{ secrets.AWS_REGION }}
-
-#       - name: Set up Docker Buildx
-#         uses: docker/setup-buildx-action@v2
-
-#       - name: Log in to Amazon ECR (frontend)
-#         run: |
-#           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_FRONTEND_REPO }}
-
-#       - name: Build and push frontend Docker image
-#         run: |
-#           docker buildx create --use
-#           docker buildx build --platform linux/amd64,linux/arm64 \
-#             -t ${{ secrets.ECR_FRONTEND_REPO }}:latest \
-#             --push ./frontend
-
-#   build-backend:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout backend code
-#         uses: actions/checkout@v2
-
-#       - name: Set up AWS CLI
-#         uses: aws-actions/configure-aws-credentials@v1
-#         with:
-#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           aws-region: ${{ secrets.AWS_REGION }}
-
-#       - name: Set up Docker Buildx
-#         uses: docker/setup-buildx-action@v2
-
-#       - name: Log in to Amazon ECR (backend)
-#         run: |
-#           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_BACKEND_REPO }}
-
-#       - name: Build and push backend Docker image
-#         run: |
-#           docker buildx create --use
-#           docker buildx build --platform linux/amd64,linux/arm64 \
-#             -t ${{ secrets.ECR_BACKEND_REPO }}:latest \
-#             --push ./backend
-
-#   deploy-frontend:
-#     runs-on: ubuntu-latest
-#     needs: build-frontend
-#     steps:
-#       - name: Deploy frontend to EC2
-#         uses: appleboy/ssh-action@v0.1.5
-#         with:
-#           host: ${{ secrets.EC2_FRONTEND_PUBLIC_IP }}
-#           username: ec2-user
-#           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-#           script: |
-#             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_FRONTEND_REPO }}
-#             docker pull ${{ secrets.ECR_FRONTEND_REPO }}:latest
-#             docker stop frontend || true && docker rm frontend || true
-#             docker run -d -p 80:3000 --name frontend ${{ secrets.ECR_FRONTEND_REPO }}:latest
-
-#   deploy-backend:
-#     runs-on: ubuntu-latest
-#     needs: build-backend
-#     steps:
-#       - name: Deploy frontend to EC2
-#         uses: appleboy/ssh-action@v0.1.5
-#         with:
-#           host: ${{ secrets.EC2_FRONTEND_PUBLIC_IP }}
-#           username: ec2-user
-#           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-#           script: |
-#             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_FRONTEND_REPO }}
-#             docker pull ${{ secrets.ECR_FRONTEND_REPO }}:latest
-#             docker stop backend || true && docker rm backend || true
-#             docker run -d -p 3001:3001 --name backend ${{ secrets.ECR_FRONTEND_REPO }}:latest
 name: Build, Push and Deploy
 
 on:
@@ -115,7 +18,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-  deploy-to-ec2:
+  deploy-to-public-ec2:
     name: Deploy to EC2
     runs-on: ubuntu-latest
     needs: application
@@ -163,3 +66,27 @@ jobs:
             sudo docker run -d --name docushare-backend \
               -p 3001:3001 \
               "$BACKEND_IMAGE"
+      - name: Deploy to Private EC2 (Backend)
+        run: |
+          aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --instance-ids "i-02bdc0003ce0adc34" \
+            --comment "Deploy backend container" \
+            --parameters 'commands=[
+              "if ! command -v docker &> /dev/null; then",
+              "  echo Docker not found. Installing Docker...",
+              "  sudo yum update -y",
+              "  sudo yum install -y docker",
+              "  sudo systemctl start docker",
+              "  sudo systemctl enable docker",
+              "  sudo usermod -aG docker ec2-user",
+              "  echo Docker installed successfully.",
+              "else",
+              "  echo Docker is already installed.",
+              "fi",
+              "aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 715841365404.dkr.ecr.us-east-2.amazonaws.com",
+              "sudo docker pull 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend:latest",
+              "sudo docker stop docushare-backend || true && docker rm docushare-backend || true",
+              "sudo docker run -d --name docushare-backend -p 3001:3001 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend:latest"
+            ]' \
+            --region us-east-2
