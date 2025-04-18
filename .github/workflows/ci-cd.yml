@@ -140,29 +140,26 @@ jobs:
               echo "Docker is already installed."
             fi
 
-            FRONTEND_IMAGE=715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend
-            BACKEND_IMAGE=715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend
+            FRONTEND_IMAGE=715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-frontend:latest
+            BACKEND_IMAGE=715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend:latest
 
             echo "Logging into ECR..."
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.BASE_ECR_URL_FRONTEND }}
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.BASE_ECR_URL_BACKEND }}
+            aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 715841365404.dkr.ecr.us-east-2.amazonaws.com
 
             echo "Pulling images..."
-            sudo docker pull $FRONTEND_IMAGE
-            sudo docker pull $BACKEND_IMAGE
+            docker pull $FRONTEND_IMAGE
+            docker pull $BACKEND_IMAGE
 
             echo "Stopping old containers..."
-            sudo docker stop docushare-frontend || true
-            sudo docker rm docushare-frontend || true
-            sudo docker stop docushare-backend || true
-            sudo docker rm docushare-backend || true
+            docker stop docushare-frontend || true && docker rm docushare-frontend || true
+            docker stop docushare-backend || true && docker rm docushare-backend || true
 
             echo "Starting Frontend container..."
             sudo docker run -d --name docushare-frontend \
               -p 80:3000 \
-              $FRONTEND_IMAGE
+              "$FRONTEND_IMAGE"
 
             echo "Starting Backend container..."
             sudo docker run -d --name docushare-backend \
               -p 3001:3001 \
-              $BACKEND_IMAGE
+              "$BACKEND_IMAGE"
