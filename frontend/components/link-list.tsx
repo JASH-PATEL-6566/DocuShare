@@ -49,17 +49,32 @@ export function LinkList({ links, onDelete, onUpdate }: LinkListProps) {
   const [selectedLink, setSelectedLink] = useState<LinkType | null>(null);
   const [isEditLinkOpen, setIsEditLinkOpen] = useState(false);
 
-  const handleCopyLink = (link: string) => {
-    // Create the full URL for the public link
-    const baseUrl = window.location.origin;
-    const publicUrl = `${baseUrl}/view/${link.split("/").pop()}`;
+  const handleCopyLink = async (link: string) => {
+    try {
+      // Build full public URL
+      const baseUrl = window.location.origin;
+      const docId = link.split("/").pop(); // Assumes last part of path is the ID
+      const publicUrl = `${baseUrl}/view/${docId}`;
 
-    navigator.clipboard.writeText(publicUrl);
-    toast({
-      title: "Link copied",
-      description: "The link has been copied to your clipboard.",
-      variant: "default",
-    });
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(publicUrl);
+
+        toast({
+          title: "Link copied",
+          description: "The link has been copied to your clipboard.",
+          variant: "default",
+        });
+      } else {
+        throw new Error("Clipboard API is not available.");
+      }
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+      toast({
+        title: "Copy failed",
+        description: "Could not copy the link to clipboard.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDelete = async (linkId: string) => {

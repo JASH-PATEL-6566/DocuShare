@@ -28,4 +28,4 @@ COPY .env .env
 # Expose backend port
 EXPOSE 3001
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/server.js"]
