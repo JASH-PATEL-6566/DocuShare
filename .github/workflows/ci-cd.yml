@@ -67,22 +67,33 @@ jobs:
 
             # Start the new containers
             echo "Starting Frontend container..."
-            sudo docker run -d --name docushare-frontend -p 80:3000 "$FRONTEND_IMAGE"
+            sudo docker run -d --name docushare-frontend -p 3000:3000 "$FRONTEND_IMAGE"
 
             echo "Configuring NGINX to proxy on port 3001..."
             sudo tee /etc/nginx/conf.d/docushare-backend.conf > /dev/null <<EOF
             server {
-                listen 3001;
+              # Frontend: Listen on port 80 for the frontend
+              listen 80;
 
-                location / {
-                    proxy_pass http://10.0.3.34:3001/api;
-                    proxy_set_header Host \$host;
-                    proxy_set_header X-Real-IP \$remote_addr;
-                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                    proxy_set_header X-Forwarded-Proto \$scheme;
-                }
+              location / {
+                  # Serve frontend from the frontend container
+                  proxy_pass http://localhost:3000/;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
               }
-              EOF
+
+              # Backend: All /api requests should go to the backend container on port 3001
+              location /api/ {
+                  proxy_pass http://$BACKEND_PRIVATE_IP:3001/;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+              }
+            }
+            EOF
             echo "Restarting NGINX..."
             sudo nginx -t && sudo systemctl restart nginx
   deploy-to-private-ec2-backend:
