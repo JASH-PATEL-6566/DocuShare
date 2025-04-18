@@ -127,7 +127,6 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
-
             if ! command -v docker &> /dev/null; then
               echo "Docker not found. Installing Docker..."
               sudo yum update -y
@@ -135,6 +134,7 @@ jobs:
               sudo systemctl start docker
               sudo systemctl enable docker
               sudo usermod -aG docker ec2-user
+              newgrp docker
               echo "Docker installed successfully."
             else
               echo "Docker is already installed."
@@ -144,15 +144,15 @@ jobs:
             BACKEND_IMAGE=715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend:latest
 
             echo "Logging into ECR..."
-            aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 715841365404.dkr.ecr.us-east-2.amazonaws.com
+            aws ecr get-login-password --region us-east-2 | sudo docker login --username AWS --password-stdin 715841365404.dkr.ecr.us-east-2.amazonaws.com
 
             echo "Pulling images..."
             sudo docker pull $FRONTEND_IMAGE
             sudo docker pull $BACKEND_IMAGE
 
             echo "Stopping old containers..."
-            sudo docker stop docushare-frontend || true && docker rm docushare-frontend || true
-            sudo docker stop docushare-backend || true && docker rm docushare-backend || true
+            sudo docker stop docushare-frontend || true && sudo docker rm docushare-frontend || true
+            sudo docker stop docushare-backend || true && sudo docker rm docushare-backend || true
 
             echo "Starting Frontend container..."
             sudo docker run -d --name docushare-frontend \
