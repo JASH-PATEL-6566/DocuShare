@@ -22,33 +22,14 @@ resource "aws_instance" "web_server" {
   vpc_security_group_ids = [aws_security_group.web_server.id]
   subnet_id              = aws_subnet.public[0].id
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
-
-  user_data = <<-EOF
-            #!/bin/bash
-            yum update -y
-
-            # Ensure SSM Agent is installed and started
-            yum install -y amazon-ssm-agent
-            systemctl enable amazon-ssm-agent
-            systemctl start amazon-ssm-agent
-
-            # Install CloudWatch Agent
-            yum install -y amazon-cloudwatch-agent
-
-            # Start CloudWatch Agent with config from SSM Parameter Store
-            /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-              -a fetch-config \
-              -m ec2 \
-              -c ssm:CWAgentConfig \
-              -s
-            EOF
-    user_data_replace_on_change = true
+  user_data = file("setup.sh")
+  user_data_replace_on_change = true
 
   tags = merge(
-    local.common_tags,
-    {
-      Name = "${local.name_prefix}-web-server"
-    }
+      local.common_tags,
+      {
+        Name = "${local.name_prefix}-web-server"
+      }
   )
 }
 

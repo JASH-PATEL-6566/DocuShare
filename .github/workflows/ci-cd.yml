@@ -127,6 +127,19 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
+
+            if ! command -v docker &> /dev/null; then
+              echo "Docker not found. Installing Docker..."
+              sudo yum update -y
+              sudo yum install -y docker
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker ec2-user
+              echo "Docker installed successfully."
+            else
+              echo "Docker is already installed."
+            fi
+
             FRONTEND_IMAGE=${{ env.BASE_ECR_URL_FRONTEND }}:latest
             BACKEND_IMAGE=${{ env.BASE_ECR_URL_BACKEND }}:latest
 
@@ -146,12 +159,13 @@ jobs:
 
             echo "Starting Frontend container..."
             docker run -d --name docushare-frontend \
-              -e NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }} \
-              -e NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }} \
-              -e NEXT_AWS_REGION=${{ secrets.NEXT_AWS_REGION }} \
-              -e NEXT_AWS_BUCKET_NAME=${{ secrets.NEXT_AWS_BUCKET_NAME }} \
               -p 80:3000 \
               $FRONTEND_IMAGE
+
+            echo "Starting Backend container..."
+            docker run -d --name docushare-backend \
+              -p 3001:3001 \
+              $BACKEND_IMAGE
 
             echo "Starting Backend container..."
             docker run -d --name
