@@ -144,6 +144,8 @@ export function CreateLinkDialog({
   }
 
   const copyLinkToClipboard = () => {
+    console.log(createLink);
+
     if (createdLink) {
       navigator.clipboard.writeText(createdLink);
       toast({

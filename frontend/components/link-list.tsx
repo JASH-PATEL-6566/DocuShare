@@ -55,6 +55,7 @@ export function LinkList({ links, onDelete, onUpdate }: LinkListProps) {
       const baseUrl = window.location.origin;
       const docId = link.split("/").pop(); // Assumes last part of path is the ID
       const publicUrl = `${baseUrl}/view/${docId}`;
+      console.log(publicUrl);
 
       if (navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(publicUrl);
