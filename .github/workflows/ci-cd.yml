@@ -26,7 +26,7 @@ jobs:
       - name: SSH and deploy both containers
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: 18.191.107.175
+          host: 18.118.144.229
           username: ec2-user
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
@@ -61,7 +61,6 @@ jobs:
             # Start the new containers
             echo "Starting Frontend container..."
             sudo docker run -d --name docushare-frontend -p 80:3000 "$FRONTEND_IMAGE"
-
 
   deploy-to-private-ec2-backend:
     name: Deploy Backend to Private EC2
