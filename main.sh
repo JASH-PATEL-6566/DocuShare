@@ -31,8 +31,6 @@ aws ecr get-login-password --region us-east-2 | docker login --username AWS --pa
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   -t 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend:latest \
-  --build-arg API_URL=http://3.142.40.182/api \
-  --build-arg FRONTEND_URL=http://3.142.40.182 \
   --push \
   ./backend
 
@@ -40,6 +38,5 @@ docker buildx build \
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   -t 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-frontend:latest \
-  --build-arg NEXT_PUBLIC_API_URL=http://3.142.40.182/api \
   --push \
   ./frontend
