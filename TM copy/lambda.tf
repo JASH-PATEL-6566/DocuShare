@@ -57,7 +57,8 @@ resource "aws_iam_policy" "lambda_custom_policy" {
         Effect = "Allow",
         Action = [
           "dynamodb:Scan",
-          "dynamodb:DeleteItem"
+          "dynamodb:DeleteItem",
+          "dynamodb:GetItem" 
         ],
         Resource = "*"
       },
