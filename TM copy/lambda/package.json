@@ -1,0 +1,24 @@
+{
+  "name": "lambda",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild cleanup-handler.ts --bundle --platform=node --target=node18 --outfile=dist/index.js",
+    "package": "npm run build && zip -j ../cleanup.zip dist/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.149",
+    "@types/node": "^22.14.1",
+    "esbuild": "^0.25.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.788.0",
+    "@aws-sdk/client-s3": "^3.787.0",
+    "@aws-sdk/lib-dynamodb": "^3.789.0",
+    "aws-lambda": "^1.0.7"
+  }
+}

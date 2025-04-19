@@ -128,9 +128,59 @@ export class S3Service {
     }
   }
 
+  // async deleteFile(fileId: string, userId: string): Promise<boolean> {
+  //   try {
+  //     // Get file metadata
+  //     const file = (await dynamoDbHelpers.getItem(TABLES.FILES, {
+  //       fileId,
+  //     })) as File;
+
+  //     if (!file) {
+  //       throw new Error("File not found");
+  //     }
+
+  //     // Check if user has access to the file
+  //     if (file.userId !== userId) {
+  //       throw new Error("Access denied");
+  //     }
+
+  //     // Find all links associated with this file
+  //     const links =
+  //       (await dynamoDbHelpers.scan(TABLES.LINKS, "fileId = :fileId", {
+  //         ":fileId": fileId,
+  //       })) || [];
+
+  //     console.log(`Found ${links.length} links associated with file ${fileId}`);
+
+  //     // Delete all associated links
+  //     for (const link of links) {
+  //       try {
+  //         await dynamoDbHelpers.deleteItem(TABLES.LINKS, {
+  //           linkId: link.linkId,
+  //         });
+  //         console.log(
+  //           `Deleted link ${link.linkId} associated with file ${fileId}`
+  //         );
+  //       } catch (error) {
+  //         console.error(`Error deleting link ${link.linkId}:`, error);
+  //         // Continue with other links even if one fails
+  //       }
+  //     }
+
+  //     // Delete file from S3
+  //     await s3Helpers.deleteFile(file.s3Url);
+
+  //     // Delete file metadata from DynamoDB
+  //     await dynamoDbHelpers.deleteItem(TABLES.FILES, { fileId });
+
+  //     return true;
+  //   } catch (error) {
+  //     console.error("Error deleting file:", error);
+  //     throw error;
+  //   }
+  // }
   async deleteFile(fileId: string, userId: string): Promise<boolean> {
     try {
-      // Get file metadata
       const file = (await dynamoDbHelpers.getItem(TABLES.FILES, {
         fileId,
       })) as File;
@@ -139,39 +189,13 @@ export class S3Service {
         throw new Error("File not found");
       }
 
-      // Check if user has access to the file
       if (file.userId !== userId) {
         throw new Error("Access denied");
       }
 
-      // Find all links associated with this file
-      const links =
-        (await dynamoDbHelpers.scan(TABLES.LINKS, "fileId = :fileId", {
-          ":fileId": fileId,
-        })) || [];
-
-      console.log(`Found ${links.length} links associated with file ${fileId}`);
-
-      // Delete all associated links
-      for (const link of links) {
-        try {
-          await dynamoDbHelpers.deleteItem(TABLES.LINKS, {
-            linkId: link.linkId,
-          });
-          console.log(
-            `Deleted link ${link.linkId} associated with file ${fileId}`
-          );
-        } catch (error) {
-          console.error(`Error deleting link ${link.linkId}:`, error);
-          // Continue with other links even if one fails
-        }
-      }
-
-      // Delete file from S3
-      await s3Helpers.deleteFile(file.s3Url);
-
-      // Delete file metadata from DynamoDB
       await dynamoDbHelpers.deleteItem(TABLES.FILES, { fileId });
+
+      console.log(`Deleted file ${fileId} from Files table`);
 
       return true;
     } catch (error) {
