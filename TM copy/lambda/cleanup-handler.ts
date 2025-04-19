@@ -10,6 +10,7 @@ const dynamoDb = DynamoDBDocument.from(
 const s3 = new S3({ region: process.env.AWS_REGION || "us-east-2" });
 
 // Table names
+const FILES_TABLE = process.env.FILES_TABLE || "Files";
 const LINKS_TABLE = process.env.LINKS_TABLE || "Links";
 const ACCESS_LOGS_TABLE = process.env.ACCESS_LOGS_TABLE || "AccessLogs";
 const ACCESS_GRANTS_TABLE = process.env.ACCESS_GRANTS_TABLE || "AccessGrants";
@@ -27,16 +28,54 @@ export const handler = async (
     for (const sqsRecord of event.Records) {
       const body = JSON.parse(sqsRecord.body);
       const fileId = body.fileId;
-      const s3Key = body.s3Url;
+      const userId = body.userId; // Get userId from the event body
 
-      if (!fileId) {
-        console.warn("Missing fileId in message, skipping");
+      if (!fileId || !userId) {
+        console.warn("Missing fileId or userId in message, skipping");
         continue;
       }
 
-      console.log(`Processing deletion for fileId: ${fileId}`);
+      console.log(
+        `Processing deletion for fileId: ${fileId} by userId: ${userId}`
+      );
 
-      // 1. Find all links associated with this file
+      // 1. Fetch the file record from the FILES table
+      const fileResult = await dynamoDb.get({
+        TableName: FILES_TABLE,
+        Key: { fileId },
+      });
+
+      const file = fileResult.Item;
+      if (!file) {
+        console.warn(`File with fileId: ${fileId} not found in the database`);
+        continue;
+      }
+
+      // Ensure that the file belongs to the user
+      if (file.userId !== userId) {
+        console.warn(
+          `UserId mismatch: User ${userId} does not have permission to delete fileId: ${fileId}`
+        );
+        continue;
+      }
+
+      // 2. Extract the s3Url from the file record
+      const s3Key = file.s3Url;
+      if (!s3Key) {
+        console.warn(
+          `No s3Url found for fileId: ${fileId}, skipping S3 deletion`
+        );
+        continue;
+      }
+
+      // 3. Delete the file from DynamoDB (FILES table)
+      await dynamoDb.delete({
+        TableName: FILES_TABLE,
+        Key: { fileId },
+      });
+      console.log(`Deleted file from FILES table with fileId: ${fileId}`);
+
+      // 4. Find all links associated with this file
       const linksResult = await dynamoDb.scan({
         TableName: LINKS_TABLE,
         FilterExpression: "fileId = :fileId",
@@ -49,7 +88,7 @@ export const handler = async (
       for (const link of links) {
         const linkId = link.linkId;
 
-        // 2.1 Delete access grants
+        // 4.1 Delete access grants
         const grantsResult = await dynamoDb.scan({
           TableName: ACCESS_GRANTS_TABLE,
           FilterExpression: "linkId = :linkId",
@@ -65,7 +104,7 @@ export const handler = async (
           console.log(`Deleted access grant: ${grant.grantId}`);
         }
 
-        // 2.2 Delete access logs
+        // 4.2 Delete access logs
         const logsResult = await dynamoDb.scan({
           TableName: ACCESS_LOGS_TABLE,
           FilterExpression: "linkId = :linkId",
@@ -81,7 +120,7 @@ export const handler = async (
           console.log(`Deleted access log: ${log.logId}`);
         }
 
-        // 2.3 Delete the link itself
+        // 4.3 Delete the link itself
         await dynamoDb.delete({
           TableName: LINKS_TABLE,
           Key: { linkId },
@@ -89,19 +128,15 @@ export const handler = async (
         console.log(`Deleted link: ${linkId}`);
       }
 
-      // 3. Delete the file from S3
-      if (s3Key) {
-        try {
-          await s3.deleteObject({
-            Bucket: BUCKET_NAME,
-            Key: s3Key,
-          });
-          console.log(`Deleted file from S3: ${s3Key}`);
-        } catch (s3Error) {
-          console.error("Failed to delete S3 file:", s3Error);
-        }
-      } else {
-        console.log("No S3 key provided, skipping S3 deletion");
+      // 5. Delete the file from S3
+      try {
+        await s3.deleteObject({
+          Bucket: BUCKET_NAME,
+          Key: s3Key,
+        });
+        console.log(`Deleted file from S3: ${s3Key}`);
+      } catch (s3Error) {
+        console.error("Failed to delete S3 file:", s3Error);
       }
 
       console.log(`Cleanup completed for fileId: ${fileId}`);

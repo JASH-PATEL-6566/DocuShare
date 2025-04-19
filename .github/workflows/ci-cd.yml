@@ -59,11 +59,11 @@ jobs:
             echo "Logging into ECR..."
             aws ecr get-login-password --region us-east-2 | sudo docker login --username AWS --password-stdin ${{ env.BASE_ECR_URL_FRONTEND }}
 
+            echo "Stopping old containers..."
+            sudo docker stop docushare-frontend || true && sudo docker rm docushare-frontend || true && sudo docker rmi ${{env.BASE_ECR_URL_FRONTEND}}:latest
+
             echo "Pulling frontend and backend Docker images..."
             sudo docker pull $FRONTEND_IMAGE
-
-            echo "Stopping old containers..."
-            sudo docker stop docushare-frontend || true && sudo docker rm docushare-frontend || true
 
             # Start the new containers
             echo "Starting Frontend container..."

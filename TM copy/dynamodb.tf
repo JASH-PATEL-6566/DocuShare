@@ -27,7 +27,6 @@ resource "aws_dynamodb_table" "access_logs" {
 resource "aws_dynamodb_table" "files" {
   name         = "Files"
   billing_mode = "PAY_PER_REQUEST"
-  stream_view_type = "OLD_IMAGE"
   hash_key     = "fileId"
   attribute {
     name = "fileId"

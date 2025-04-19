@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { s3Helpers } from "../config/s3";
 import { dynamoDbHelpers, TABLES } from "../config/dynamodb";
+import { sqsHelpers } from "../config/sqs";
 import type {
   File,
   FileCreateInput,
@@ -12,6 +13,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 export class S3Service {
   // New method to upload file directly to S3
+
   async uploadFileToS3(
     s3Key: string,
     fileBuffer: Buffer,
@@ -193,10 +195,18 @@ export class S3Service {
         throw new Error("Access denied");
       }
 
-      await dynamoDbHelpers.deleteItem(TABLES.FILES, { fileId });
+      // await dynamoDbHelpers.deleteItem(TABLES.FILES, { fileId });
 
-      console.log(`Deleted file ${fileId} from Files table`);
-
+      sqsHelpers
+        .sendEventMessage({ fileId, userId })
+        .then((messageId) => {
+          console.log("Sent event with Message ID:", messageId);
+          return true;
+        })
+        .catch((error) => {
+          console.error("Error sending event:", error);
+          throw error;
+        });
       return true;
     } catch (error) {
       console.error("Error deleting file:", error);
