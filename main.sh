@@ -14,20 +14,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Capture outputs
-PRIVATE_ID=$(terraform output -raw private_ec2_instance_id)
-PRIVATE_IP=$(terraform output -raw private_ec2_private_ip)
-PUBLIC_IP=$(terraform output -raw public_ec2_public_ip)
-
-
 cd ..
 
-# ==========================
-# Export to GitHub Actions environment
-# ==========================
-echo "PRIVATE_ID=$PRIVATE_ID" >> $GITHUB_ENV
-echo "PRIVATE_IP=$PRIVATE_IP" >> $GITHUB_ENV
-echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+read -p "Terraform apply completed. Confirm to proceed with Docker build and push (y/n): " confirm
+if [[ "$confirm" != "y" ]]; then
+  echo "Operation cancelled by user."
+  exit 0
+fi
 
 # ==========================
 # PUSH IMAGE TO ECR
@@ -50,11 +43,3 @@ docker buildx build \
   --build-arg NEXT_PUBLIC_API_URL=http://3.142.40.182/api \
   --push \
   ./frontend
-
-# ==========================
-# GITHUB
-# ==========================
-
-git add .
-git commit -m "run from bash"
-git push

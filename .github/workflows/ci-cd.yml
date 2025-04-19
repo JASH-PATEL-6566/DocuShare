@@ -9,6 +9,9 @@ env:
   BASE_ECR_URL_BACKEND: 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend
   BASE_ECR_URL_FRONTEND: 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-frontend
   APP_ID: 715841365404
+  EC2_PRIVATE_ID: i-0850bfba539238461
+  EC2_PRIVATE_IP: 10.0.3.34
+  EC2_PUBLIC_IP: 18.118.193.114
 
 jobs:
   application:
@@ -17,24 +20,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Run Terraform and export to GitHub Actions environment
-        run: |
-          # Run terraform output commands and capture the values
-          PRIVATE_ID=$(terraform output -raw private_ec2_instance_id)
-          PRIVATE_IP=$(terraform output -raw private_ec2_private_ip)
-          PUBLIC_IP=$(terraform output -raw public_ec2_public_ip)
-
-          # Export values to GitHub Actions environment
-          echo "PRIVATE_ID=$PRIVATE_ID" >> $GITHUB_ENV
-          echo "PRIVATE_IP=$PRIVATE_IP" >> $GITHUB_ENV
-          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
-
-      - name: Verify exported variables
-        run: |
-          # Access and use the exported environment variables
-          echo "Private ID: $PRIVATE_ID"
-          echo "Private IP: $PRIVATE_IP"
-          echo "Public IP: $PUBLIC_IP"
 
   deploy-to-public-ec2:
     name: Deploy to EC2 (Public)
@@ -44,7 +29,7 @@ jobs:
       - name: SSH and deploy both containers
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ env.PUBLIC_IP }}
+          host: ${{ env.EC2_PUBLIC_IP }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
@@ -104,7 +89,7 @@ jobs:
 
               # Backend: All /api requests should go to the backend container on port 3001
               location /api/ {
-                  proxy_pass http://${{ env.PRIVATE_IP }}:3001/api/;
+                  proxy_pass http://${{ env.EC2_PRIVATE_IP }}:3001/api/;
                   proxy_set_header Host \$host;
                   proxy_set_header X-Real-IP \$remote_addr;
                   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -130,7 +115,7 @@ jobs:
         run: |
           aws ssm send-command \
             --document-name "AWS-RunShellScript" \
-            --instance-ids "${{ env.PRIVATE_ID }}" \
+            --instance-ids "${{ env.EC2_PRIVATE_ID }}" \
             --comment "Deploy backend container" \
             --parameters 'commands=[
               "if ! command -v docker &> /dev/null; then",

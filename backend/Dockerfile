@@ -22,13 +22,6 @@ RUN npm install --only=production
 # Copy build output
 COPY --from=builder /app/dist ./dist
 
-ARG API_URL
-ARG FRONTEND_URL
-
-ENV API_URL=$API_URL
-ENV FRONTEND_URL=$FRONTEND_URL
-# 
-
 # Copy .env
 COPY .env .env
 

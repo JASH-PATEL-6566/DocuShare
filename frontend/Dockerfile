@@ -23,9 +23,6 @@ COPY --from=builder /app/public ./public
 # COPY --from=builder /app/next.config.js ./
 COPY --from=builder /app/node_modules ./node_modules
 
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-
 COPY --from=builder /app/.env .env
 
 # Expose frontend port
