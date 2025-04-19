@@ -1,37 +1,38 @@
-#!/bin/bash
-set -e
+ #!/bin/bash
+ 
+ # Update system and install Docker
+ sudo dnf update -y
+ sudo dnf install -y docker
+ 
+ # Start and enable Docker service
+ sudo systemctl start docker
+ sudo systemctl enable docker
+ 
+ # Install AWS CLI if not already installed
+ sudo dnf install -y awscli
+ 
+ # Set environment variables
+ AWS_REGION="us-east-2"
+ ECR_REPO="docushare-backend"
+ ACCOUNT_ID="715841365404"
+ 
+ # Wait for Docker service to be fully running
+ sleep 20
+ 
+ # Login to Amazon ECR
+ aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
-# Install Docker
-yum update -y
-amazon-linux-extras install docker -y
-service docker start
-usermod -a -G docker ec2-user
-
-# Install AWS CLI (just in case)
-yum install -y aws-cli
-
-# Log in to ECR
-REGION="us-east-2"
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-$(aws ecr get-login --no-include-email --region $REGION)
-
-# Pull & Run Frontend and Backend Containers
-docker pull $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/docushare-frontend:latest
-docker pull $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/docushare-backend:latest
-
-docker run -d --name frontend -p 80:3000 $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/docushare-frontend:latest
-docker run -d --name backend -p 3001:3001 $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/docushare-backend:latest
+ # Ensure SSM Agent is installed and started
+yum install -y amazon-ssm-agent
+systemctl enable amazon-ssm-agent
+systemctl start amazon-ssm-agent
 
 # Install CloudWatch Agent
 yum install -y amazon-cloudwatch-agent
 
-# Copy CloudWatch config
-cat <<EOF > /opt/aws/amazon-cloudwatch-agent/bin/cloudwatch-config.json
-$(cat /home/ec2-user/cloudwatch-config.json)
-EOF
-
+# Start CloudWatch Agent with config from SSM Parameter Store
 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-  -a fetch-config \
-  -m ec2 \
-  -c file:/opt/aws/amazon-cloudwatch-agent/bin/cloudwatch-config.json \
-  -s
+    -a fetch-config \
+    -m ec2 \
+    -c ssm:CWAgentConfig \
+    -s
