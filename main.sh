@@ -19,6 +19,7 @@ PRIVATE_ID=$(terraform output -raw private_ec2_instance_id)
 PRIVATE_IP=$(terraform output -raw private_ec2_private_ip)
 PUBLIC_IP=$(terraform output -raw public_ec2_public_ip)
 
+
 cd ..
 
 # ==========================
