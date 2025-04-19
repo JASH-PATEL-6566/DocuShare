@@ -127,8 +127,8 @@ jobs:
               "  echo Docker is already installed.",
               "fi",
               "aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 715841365404.dkr.ecr.us-east-2.amazonaws.com",
+              "sudo docker stop docushare-backend || true && docker rm docushare-backend || true && docker rmi 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend:latest",
               "sudo docker pull 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend:latest",
-              "sudo docker stop docushare-backend || true && docker rm docushare-backend || true",
               "sudo docker run -d --name docushare-backend -p 3001:3001 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend:latest"
             ]' \
             --region us-east-2
