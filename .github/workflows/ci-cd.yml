@@ -9,9 +9,9 @@ env:
   BASE_ECR_URL_BACKEND: 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-backend
   BASE_ECR_URL_FRONTEND: 715841365404.dkr.ecr.us-east-2.amazonaws.com/docushare-frontend
   APP_ID: 715841365404
-  EC2_PRIVATE_ID: i-03c4fe91266951327
-  EC2_PRIVATE_IP: 10.0.3.232
-  EC2_PUBLIC_IP: 3.148.170.68
+  EC2_PRIVATE_ID: i-0e817cbda04d74b06
+  EC2_PRIVATE_IP: 10.0.3.211
+  EC2_PUBLIC_IP: 18.119.213.145
 
 jobs:
   application:
